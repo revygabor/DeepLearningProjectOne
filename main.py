@@ -4,8 +4,11 @@ import pandas as pd
 from numpy.fft import fft
 
 from keras.models import Sequential, load_model
-from keras.layers import Dense
+from keras.layers import Dense, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
 
 
 def preprocess(mtx, step, window_size):
@@ -30,30 +33,34 @@ def preprocess(mtx, step, window_size):
 
 load0 = False
 load1 = False
-loading_model = True
+loading_model = False
 
 window_size = 50
+step = 5
 input_size = 6*window_size
+dropout_rate = 0.2
 
-# import, preprocess datas
+# importing, preprocessing data
 
+#data0
 if load0:
     inp0 = np.loadtxt("input0.txt", delimiter=',')
 else:
     data0 = pd.read_csv("data_gabor.csv")
     mtx0 = data0.as_matrix()
-    inp0 = preprocess(mtx0, 5, window_size)
+    inp0 = preprocess(mtx0, step, window_size)
     # np.savetxt("input0.txt", inp0, delimiter=',') #4GB nem biztos h el kell menteni
 
 print("data0 loaded")
 
+#data1
 if load1:
     inp1 = np.loadtxt("input.txt", delimiter=',')
 else:
     data1 = pd.read_csv("data_dani.csv")
     mtx1 = data1.as_matrix()
-    inp1 = preprocess(mtx1, 4, window_size)
-# np.savetxt("input1.txt", inp1, delimiter=',')
+    inp1 = preprocess(mtx1, step, window_size)
+    # np.savetxt("input1.txt", inp1, delimiter=',')
 
 print("data1 loaded")
 
@@ -63,27 +70,51 @@ label1 = np.ones([np.shape(inp1)[0]])
 inputs = np.concatenate((inp0, inp1))  # merge data
 labels = np.concatenate((label0, label1))  # merge labels
 
-data_all = np.concatenate((inputs, labels[:, np.newaxis]), axis=1)
-data_all = np.random.permutation(data_all)
-inputs = data_all[:, 0:input_size]
-labels = data_all[:, input_size]
 
-# build model
+#permutating
+permutation_array = np.arange(inputs.shape[0]) #ezzel keverjük össze az adatokat
+permutation_array = np.random.permutation(permutation_array) #összekeverjük
+
+inputs = inputs[permutation_array] #indexeljük
+labels = labels[permutation_array]
+
+
+# data_all = np.concatenate((inputs, labels[:, np.newaxis]), axis=1)
+# data_all = np.random.permutation(data_all)
+# inputs = data_all[:, 0:input_size]
+# labels = data_all[:, input_size]
+
+#train-validation data split
+inputs_train, inputs_val, labels_train, labels_val = train_test_split(inputs, labels, test_size=0.33)
+
+# building model
 if loading_model:
     model = load_model("lepes_model.h5")
 else:
     model = Sequential()
     model.add(Dense(256, activation="sigmoid", input_dim=input_size))
+    model.add(Dropout(dropout_rate))
     model.add(Dense(128, activation="sigmoid"))
+    model.add(Dropout(dropout_rate))
     model.add(Dense(64, activation="sigmoid"))
+    model.add(Dropout(dropout_rate))
     model.add(Dense(1, activation="sigmoid"))
     model.compile(optimizer="adam", loss="binary_crossentropy", metrics=['acc'])
 
-early_stopping = EarlyStopping(patience=2, min_delta=0.0001, monitor="loss")
+early_stopping = EarlyStopping(patience=25, min_delta=0.0001, monitor="val_loss")
 checkpoint = ModelCheckpoint("lepes_model.h5", verbose=0, save_best_only=False, save_weights_only=False, mode='auto', period=1)
 
 # training model
-model.fit(inputs, labels, epochs=100, callbacks=[early_stopping, checkpoint], batch_size=128)
+model.fit(inputs_train, labels_train, epochs=100, callbacks=[early_stopping, checkpoint],
+          batch_size=128, verbose=1, validation_data=(inputs_val, labels_val))
 
-# save model
+#confusion matrix
+confusion_mtx_train = confusion_matrix(labels_train, model.predict(inputs_train))
+print("confusion matrix (train):", confusion_mtx_train)
+
+confusion_mtx_val = confusion_matrix(labels_val, model.predict(inputs_val))
+print("confusion matrix (val):", confusion_mtx_val)
+
+
+# saving model
 model.save("lepes_model.h5")
