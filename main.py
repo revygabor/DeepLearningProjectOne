@@ -8,6 +8,7 @@ from keras.layers import Dense, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import confusion_matrix
 
 
@@ -33,10 +34,10 @@ def preprocess(mtx, step, window_size):
 
 load0 = False
 load1 = False
-loading_model = False
+loading_model = True
 
 window_size = 50
-step = 5
+step = 4
 input_size = 6*window_size
 dropout_rate = 0.2
 
@@ -69,6 +70,10 @@ label1 = np.ones([np.shape(inp1)[0]])
 
 inputs = np.concatenate((inp0, inp1))  # merge data
 labels = np.concatenate((label0, label1))  # merge labels
+
+sc = StandardScaler(copy=False)
+sc.fit(inputs)
+inputs = sc.transform(inputs)
 
 
 #permutating
@@ -105,14 +110,20 @@ early_stopping = EarlyStopping(patience=25, min_delta=0.0001, monitor="val_loss"
 checkpoint = ModelCheckpoint("lepes_model.h5", verbose=0, save_best_only=False, save_weights_only=False, mode='auto', period=1)
 
 # training model
-model.fit(inputs_train, labels_train, epochs=100, callbacks=[early_stopping, checkpoint],
+model.fit(inputs_train, labels_train, epochs=10000, callbacks=[early_stopping, checkpoint],
           batch_size=128, verbose=1, validation_data=(inputs_val, labels_val))
 
-#confusion matrix
-confusion_mtx_train = confusion_matrix(labels_train, model.predict(inputs_train))
+# confusion matrix
+predict = model.predict(inputs_train)
+predict = np.round(predict, 0)
+
+confusion_mtx_train = confusion_matrix(labels_train, predict)
 print("confusion matrix (train):", confusion_mtx_train)
 
-confusion_mtx_val = confusion_matrix(labels_val, model.predict(inputs_val))
+predict = model.predict(inputs_val)
+predict = np.round(predict, 0)
+
+confusion_mtx_val = confusion_matrix(labels_val, predict)
 print("confusion matrix (val):", confusion_mtx_val)
 
 

@@ -51,7 +51,8 @@ for n in range(n_files):
 
     for i in range(0, length):
         rot_mtx = rotMtx(attitude[i])
-        acc_done = np.concatenate((acc_done, acceleration[i] * rot_mtx[0] * rot_mtx[1] * rot_mtx[2]))
+        act = np.matmul(rot_mtx[2] * rot_mtx[1] * rot_mtx[0], acceleration[i])
+        acc_done = np.concatenate((acc_done, act))
 
     acc_done = np.append(acc_done, np.full([length, 1], person_idx), axis=1)
     out = np.concatenate((out, acc_done))

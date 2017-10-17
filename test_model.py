@@ -54,6 +54,8 @@ inp = preprocess(mtx, 5, 50)
 # predicting1
 model = load_model("lepes_model.h5")
 pred = model.predict(inp)
+pred = np.round(pred, 0)
+
 print(np.array_str(pred))
 
 #confusion matrix1
@@ -67,6 +69,8 @@ inp = preprocess(mtx, 5, 50)
 
 # predicting0
 pred = model.predict(inp)
+pred = np.round(pred, 0)
+
 print(np.array_str(pred))
 
 #confusion matrix0
