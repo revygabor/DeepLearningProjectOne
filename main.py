@@ -34,7 +34,7 @@ def preprocess(mtx, step, window_size):
 
 load0 = False
 load1 = False
-loading_model = True
+loading_model = False
 
 window_size = 50
 step = 4

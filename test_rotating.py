@@ -31,7 +31,7 @@ print("original plotted")
 
 data = pd.read_csv(rotated, header= None)  # elforgatott fájl beolvasása
 
-acceleration_rot = data.as_matrix(columns=[1, 2, 3])
+acceleration_rot = data.as_matrix(columns=[0, 1, 2])
 acceleration_length_rot = ddd_vector_length(acceleration_rot)
 
 
@@ -42,13 +42,7 @@ s2.line(np.arange(acceleration_length_rot.size), acceleration_length_rot, line_c
 # create another one
 s3 = figure(width=1000, height=250, title='difference')
 diff = np.subtract(acceleration_length_orig, acceleration_length_rot)
-s3.line(np.arange(acceleration_length_orig.size), diff, line_color='red')# create another one
-s4 = figure(width=1000, height=250, title='difference-1')
-diff2 = np.subtract(acceleration_length_orig[0], acceleration_length_rot[1:])
-s3.line(np.arange(acceleration_length_orig.size), diff2, line_color='red')# create another one
-s4 = figure(width=1000, height=250, title='difference+1')
-diff3 = np.subtract(acceleration_length_orig, acceleration_length_rot+1)
-s3.line(np.arange(acceleration_length_orig.size), diff3, line_color='red')
+s3.line(np.arange(acceleration_length_orig.size), diff, line_color='red')
 
 
 
