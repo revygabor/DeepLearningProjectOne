@@ -60,17 +60,13 @@ inputs_train, inputs_val, labels_train, labels_val = train_test_split(sequence, 
 #creating model
 model = Sequential()
 
-# model.add(LSTM(
-#     input_dim=3,
-#     output_dim=50,
-#     return_sequences=True))
-model.add(LSTM(input_shape=(None, 3), units=50, return_sequences=True))
+model.add(LSTM(input_shape=(None, 3), units=50, return_sequences=False))
 model.add(Dropout(0.2))
 
 # model.add(Dense(
 #     output_dim=1, activation='linear'))
 model.add(Dense(units=1, activation="linear"))
 
-model.compile(loss='mse', optimizer='rmsprop')
+model.compile(loss='mse', optimizer='rmsprop', metrics=['acc'])
 
 model.fit(inputs_train, labels_train, validation_data=(inputs_val, labels_val))
